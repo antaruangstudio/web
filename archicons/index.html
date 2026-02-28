@@ -11,7 +11,103 @@
     <link rel="stylesheet" href="style.css">
     <base href="/">
 </head>
+<style>
+    /* Sembunyikan cursor bawaan browser di seluruh halaman */
+    * {
+            cursor: none !important;
+        }
+
+        /* ---- CURSOR UTAMA (dot) ---- */
+        #cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 8px;
+            background: #dc143c;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s ease, height 0.2s ease, background 0.2s ease;
+            mix-blend-mode: normal;
+        }
+
+        /* ---- CURSOR RING (lingkaran luar) ---- */
+        #cursor-ring {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 36px;
+            height: 36px;
+            border: 1.5px solid rgba(220, 20, 60, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999998;
+            transform: translate(-50%, -50%);
+
+            /* Ring sedikit lag — memberikan efek ekor yang elegan */
+            transition:
+                width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 0.3s ease,
+                background 0.3s ease,
+                opacity 0.3s ease;
+        }
+
+        /* ---- STATE: Hover di atas elemen interaktif ---- */
+        body.cursor-hover #cursor-dot {
+            width: 6px;
+            height: 6px;
+            background: #ffffff;
+        }
+
+        body.cursor-hover #cursor-ring {
+            width: 52px;
+            height: 52px;
+            border-color: rgba(220, 20, 60, 0.9);
+            background: rgba(220, 20, 60, 0.08);
+        }
+
+        /* ---- STATE: Saat klik ---- */
+        body.cursor-click #cursor-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff3060;
+        }
+
+        body.cursor-click #cursor-ring {
+            width: 28px;
+            height: 28px;
+            border-color: rgba(220, 20, 60, 1);
+            background: rgba(220, 20, 60, 0.15);
+        }
+
+        /* ---- Sembunyikan cursor saat keluar dari window ---- */
+        body.cursor-hidden #cursor-dot,
+        body.cursor-hidden #cursor-ring {
+            opacity: 0;
+        }
+
+        /* ---- Trail particles ---- */
+        .cursor-trail {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999990;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 20, 60, 0.35);
+            animation: trailFade 0.6s ease forwards;
+        }
+
+        @keyframes trailFade {
+            0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+        }
+</style>
 <body>
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
     <!-- SPLASH SCREEN -->
     <div id="splash-screen">
         <div class="splash-content">
@@ -244,6 +340,109 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- CUSTOM CURSOR -->
+    <script>
+        (function () {
+            const dot    = document.getElementById('cursor-dot');
+            const ring   = document.getElementById('cursor-ring');
+            const body   = document.body;
+
+            // Posisi real-time (dot)
+            let mouseX = 0, mouseY = 0;
+            // Posisi ring (lerp/smooth)
+            let ringX = 0, ringY = 0;
+
+            /* ---- Track mouse position ---- */
+            document.addEventListener('mousemove', e => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+
+                // Dot langsung mengikuti
+                dot.style.left = mouseX + 'px';
+                dot.style.top  = mouseY + 'px';
+
+                // Spawn trail particle sesekali
+                spawnTrail(mouseX, mouseY);
+            });
+
+            /* ---- Ring mengikuti dengan smooth lag (rAF) ---- */
+            function animateRing() {
+                // Lerp — semakin kecil angka, semakin lambat ring mengikuti
+                const lerpFactor = 0.12;
+                ringX += (mouseX - ringX) * lerpFactor;
+                ringY += (mouseY - ringY) * lerpFactor;
+
+                ring.style.left = ringX + 'px';
+                ring.style.top  = ringY + 'px';
+
+                requestAnimationFrame(animateRing);
+            }
+            animateRing();
+
+            /* ---- Hover state ---- */
+            const hoverSelectors = 'a, button, [role="button"], input, textarea, select, label, .service-btn, .social-icon, .gallery-item, .accordion-button, .slide-btn, .nav-link, .navbar-brand';
+
+            document.addEventListener('mouseover', e => {
+                if (e.target.closest(hoverSelectors)) {
+                    body.classList.add('cursor-hover');
+                }
+            });
+
+            document.addEventListener('mouseout', e => {
+                if (e.target.closest(hoverSelectors)) {
+                    body.classList.remove('cursor-hover');
+                }
+            });
+
+            /* ---- Click state ---- */
+            document.addEventListener('mousedown', () => {
+                body.classList.add('cursor-click');
+            });
+
+            document.addEventListener('mouseup', () => {
+                body.classList.remove('cursor-click');
+            });
+
+            /* ---- Hilang saat keluar window ---- */
+            document.addEventListener('mouseleave', () => {
+                body.classList.add('cursor-hidden');
+            });
+
+            document.addEventListener('mouseenter', () => {
+                body.classList.remove('cursor-hidden');
+            });
+
+            /* ---- Trail particle ---- */
+            let trailCount = 0;
+            function spawnTrail(x, y) {
+                trailCount++;
+                // Spawn setiap 4 frame agar tidak terlalu berat
+                if (trailCount % 4 !== 0) return;
+
+                const particle = document.createElement('div');
+                particle.classList.add('cursor-trail');
+
+                const size = Math.random() * 5 + 3; // 3–8px
+                particle.style.width  = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left   = x + 'px';
+                particle.style.top    = y + 'px';
+
+                document.body.appendChild(particle);
+
+                // Hapus setelah animasi selesai
+                setTimeout(() => particle.remove(), 600);
+            }
+
+            /* ---- Sembunyikan di layar sentuh ---- */
+            if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                dot.style.display  = 'none';
+                ring.style.display = 'none';
+                // Kembalikan cursor default
+                document.documentElement.style.cursor = '';
+            }
+        })();
+    </script>
     <!-- <script>
         window.addEventListener('load', () => {
             const splash = document.getElementById('splash-screen');
