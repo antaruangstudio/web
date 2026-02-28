@@ -12,6 +12,99 @@
     <base href="/">
 </head>
 <style>
+    /* Sembunyikan cursor bawaan browser di seluruh halaman */
+    * {
+            cursor: none !important;
+        }
+
+        /* ---- CURSOR UTAMA (dot) ---- */
+        #cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 8px;
+            height: 8px;
+            background: #dc143c;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s ease, height 0.2s ease, background 0.2s ease;
+            mix-blend-mode: normal;
+        }
+
+        /* ---- CURSOR RING (lingkaran luar) ---- */
+        #cursor-ring {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 36px;
+            height: 36px;
+            border: 1.5px solid rgba(220, 20, 60, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999998;
+            transform: translate(-50%, -50%);
+
+            /* Ring sedikit lag — memberikan efek ekor yang elegan */
+            transition:
+                width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                height 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                border-color 0.3s ease,
+                background 0.3s ease,
+                opacity 0.3s ease;
+        }
+
+        /* ---- STATE: Hover di atas elemen interaktif ---- */
+        body.cursor-hover #cursor-dot {
+            width: 6px;
+            height: 6px;
+            background: #ffffff;
+        }
+
+        body.cursor-hover #cursor-ring {
+            width: 52px;
+            height: 52px;
+            border-color: rgba(220, 20, 60, 0.9);
+            background: rgba(220, 20, 60, 0.08);
+        }
+
+        /* ---- STATE: Saat klik ---- */
+        body.cursor-click #cursor-dot {
+            width: 12px;
+            height: 12px;
+            background: #ff3060;
+        }
+
+        body.cursor-click #cursor-ring {
+            width: 28px;
+            height: 28px;
+            border-color: rgba(220, 20, 60, 1);
+            background: rgba(220, 20, 60, 0.15);
+        }
+
+        /* ---- Sembunyikan cursor saat keluar dari window ---- */
+        body.cursor-hidden #cursor-dot,
+        body.cursor-hidden #cursor-ring {
+            opacity: 0;
+        }
+
+        /* ---- Trail particles ---- */
+        .cursor-trail {
+            position: fixed;
+            pointer-events: none;
+            z-index: 999990;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 20, 60, 0.35);
+            animation: trailFade 0.6s ease forwards;
+        }
+
+        @keyframes trailFade {
+            0% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+        }
+        
         .hero-slide-1 {
             background-image: url("universal_assets/BANNER_ANTARUANG.png");
         }
